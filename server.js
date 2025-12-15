@@ -1,8 +1,14 @@
 const express = require("express");
+const cors = require("cors")
 const mysql = require("mysql2");
 const app = express();
 const PORT = 3000;
 const connection = require("./database/connection");
+
+app.use(cors({
+    origin: "http://localhost:5173"
+}));
+
 
 app.use(express.static(`public`))
 app.use(express.json());

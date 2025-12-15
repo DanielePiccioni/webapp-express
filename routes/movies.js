@@ -1,6 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../database/connection");
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+    destination: "./public/uploads",
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + "-" + file.originalname);
+    }
+});
+
+const upload = multer({ storage: storage });
 
 router.get("/", (req, res) => {
     const sql = "SELECT * FROM movies";
@@ -33,5 +43,31 @@ router.get("/:id", (req, res) => {
         });
     });
 });
+
+router.post("/:id/reviews", upload.single("image"), (req, res) => {
+    const movieId = req.params.id;
+    const { name, text, vote } = req.body;
+    const image = req.file ? "/uploads/" + req.file.filename : null;
+    const sql = `
+        INSERT INTO reviews (movie_id, name, text, vote, image)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+
+    db.query(sql, [movieId, name, text, vote, image], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        res.json({
+            review: {
+                id: result.insertId,
+                movie_id: movieId,
+                name,
+                text,
+                vote,
+                image
+            }
+        });
+    });
+});
+
 
 module.exports = router;
